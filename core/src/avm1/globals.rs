@@ -62,6 +62,7 @@ mod transform;
 mod video;
 mod xml;
 mod xml_node;
+mod xml_socket;
 
 const GLOBAL_DECLS: &[Declaration] = declare_properties! {
     "trace" => method(trace; DONT_ENUM);
@@ -478,6 +479,7 @@ pub struct SystemPrototypes<'gc> {
     pub array_constructor: Object<'gc>,
     pub xml_node: Object<'gc>,
     pub xml_constructor: Object<'gc>,
+    pub xml_socket: Object<'gc>,
     pub string: Object<'gc>,
     pub number: Object<'gc>,
     pub boolean: Object<'gc>,
@@ -542,6 +544,8 @@ pub fn create_globals<'gc>(
     let xmlnode_proto = xml_node::create_proto(context, object_proto, function_proto);
 
     let xml_proto = xml::create_proto(context, xmlnode_proto, function_proto);
+
+    let xml_socket_proto = xml_socket::create_proto(gc_context, object_proto, function_proto);
 
     let string_proto = string::create_proto(context, object_proto, function_proto);
     let number_proto = number::create_proto(context, object_proto, function_proto);
@@ -672,6 +676,13 @@ pub fn create_globals<'gc>(
         constructor_to_fn!(xml::constructor),
         function_proto,
         xml_proto,
+    );
+    let xmlsocket = FunctionObject::constructor(
+        gc_context,
+        Executable::Native(xml_socket::constructor),
+        constructor_to_fn!(xml_socket::constructor),
+        Some(function_proto),
+        xml_socket_proto,
     );
     let string = string::create_string_object(context, string_proto, function_proto);
     let number = number::create_number_object(context, number_proto, function_proto);
@@ -927,6 +938,12 @@ pub fn create_globals<'gc>(
     );
     globals.define_value(gc_context, "XMLNode", xmlnode.into(), Attribute::DONT_ENUM);
     globals.define_value(gc_context, "XML", xml.into(), Attribute::DONT_ENUM);
+    globals.define_value(
+        gc_context,
+        "XMLSocket",
+        xmlsocket.into(),
+        Attribute::DONT_ENUM,
+    );
     globals.define_value(gc_context, "String", string.into(), Attribute::DONT_ENUM);
     globals.define_value(gc_context, "Number", number.into(), Attribute::DONT_ENUM);
     globals.define_value(gc_context, "Boolean", boolean.into(), Attribute::DONT_ENUM);
@@ -1080,6 +1097,7 @@ pub fn create_globals<'gc>(
             array_constructor: array,
             xml_node: xmlnode_proto,
             xml_constructor: xml,
+            xml_socket: xml_socket_proto,
             string: string_proto,
             number: number_proto,
             boolean: boolean_proto,
