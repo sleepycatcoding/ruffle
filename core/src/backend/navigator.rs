@@ -39,6 +39,23 @@ pub enum OpenURLMode {
     Deny,
 }
 
+#[cfg_attr(feature = "clap", derive(clap::ValueEnum))]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum XmlSocketBehavior {
+    /// No `XMLSocket` support (i.e. `XMLSocket.connect()` always return `false`)
+    Disabled,
+
+    /// Allows movies to connect to any host using `XMLSocket`.
+    Unrestricted,
+
+    /// Refuse all `XMLSocket` connection requests
+    /// (i.e. `XMLSocket.onConnect(success)`always called with `success` = `false`)
+    Deny,
+
+    /// Ask the user every time a `XMLSocket` connection is requested
+    Ask,
+}
+
 impl NavigationMethod {
     /// Convert an SWF method enum into a NavigationMethod.
     pub fn from_send_vars_method(s: SendVarsMethod) -> Option<Self> {

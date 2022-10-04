@@ -1,6 +1,6 @@
 use crate::RUFFLE_VERSION;
 use clap::Parser;
-use ruffle_core::backend::navigator::OpenURLMode;
+use ruffle_core::backend::navigator::{XmlSocketBehavior, OpenURLMode};
 use ruffle_core::config::Letterbox;
 use ruffle_core::{LoadBehavior, StageScaleMode};
 use ruffle_render::quality::StageQuality;
@@ -75,6 +75,19 @@ pub struct Opt {
     /// Proxy to use when loading movies via URL.
     #[clap(long)]
     pub proxy: Option<Url>,
+
+    /// Add an endpoint (`[host]:[port]`) to the XMLSocket whitelist.
+    #[clap(long = "xmlsocket-allow", number_of_values = 1, action = clap::ArgAction::Append)]
+    pub xml_socket_allow: Vec<String>,
+
+    /// Define how to deal with XMLSocket.
+    #[clap(
+        long = "xmlsocket",
+        short,
+        default_value = "disabled",
+        value_parser
+    )]
+    pub xml_socket_behavior: XmlSocketBehavior,
 
     /// Replace all embedded HTTP URLs with HTTPS.
     #[clap(long, action)]
