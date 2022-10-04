@@ -11,6 +11,7 @@ use ruffle_core::backend::navigator::{
 };
 use ruffle_core::indexmap::IndexMap;
 use ruffle_core::loader::Error;
+use ruffle_core::socket::XmlSocketConnection;
 use std::rc::Rc;
 use std::str::FromStr;
 use std::sync::mpsc::Sender;
@@ -257,5 +258,13 @@ impl NavigatorBackend for ExternalNavigatorBackend {
             tracing::error!("Url::set_scheme failed on: {}", url);
         }
         url
+    }
+
+    fn connect_xml_socket(
+        &mut self,
+        _host: &str,
+        _port: u16,
+    ) -> Option<Box<dyn XmlSocketConnection>> {
+        None
     }
 }

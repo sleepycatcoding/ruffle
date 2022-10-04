@@ -23,6 +23,7 @@ use crate::prelude::*;
 use crate::streams::StreamManager;
 use crate::string::AvmStringInterner;
 use crate::stub::StubCollection;
+use crate::socket::XmlSockets;
 use crate::tag_utils::{SwfMovie, SwfSlice};
 use crate::timer::Timers;
 use core::fmt;
@@ -169,6 +170,9 @@ pub struct UpdateContext<'a, 'gc> {
 
     /// Timed callbacks created with `setInterval`/`setTimeout`.
     pub timers: &'a mut Timers<'gc>,
+
+    /// Handle `XMLSocket` connections lifecycle
+    pub xml_sockets: &'a mut XmlSockets<'gc>,
 
     pub current_context_menu: &'a mut Option<ContextMenuState<'gc>>,
 
@@ -362,6 +366,7 @@ impl<'a, 'gc> UpdateContext<'a, 'gc> {
             avm2_shared_objects: self.avm2_shared_objects,
             unbound_text_fields: self.unbound_text_fields,
             timers: self.timers,
+            xml_sockets: self.xml_sockets,
             current_context_menu: self.current_context_menu,
             avm1: self.avm1,
             avm2: self.avm2,

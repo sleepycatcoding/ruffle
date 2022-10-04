@@ -6,6 +6,7 @@ use ruffle_core::backend::navigator::{
 use ruffle_core::config::NetworkingAccessMode;
 use ruffle_core::indexmap::IndexMap;
 use ruffle_core::loader::Error;
+use ruffle_core::socket::XmlSocketConnection;
 use std::borrow::Cow;
 use std::sync::Arc;
 use tracing_subscriber::layer::Layered;
@@ -275,5 +276,13 @@ impl NavigatorBackend for WebNavigatorBackend {
             tracing::error!("Url::set_scheme failed on: {}", url);
         }
         url
+    }
+
+    fn connect_xml_socket(
+        &mut self,
+        _host: &str,
+        _port: u16,
+    ) -> Option<Box<dyn XmlSocketConnection>> {
+        None
     }
 }

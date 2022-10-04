@@ -38,6 +38,7 @@ mod pixel_bender;
 mod player;
 mod prelude;
 mod streams;
+pub mod socket;
 pub mod string;
 pub mod tag_utils;
 pub mod timer;
