@@ -124,7 +124,7 @@ impl<'gc> XmlSockets<'gc> {
         }
     }
 
-    pub fn update_sockets(uc: &mut UpdateContext<'_, 'gc, '_>) {
+    pub fn update_sockets(uc: &mut UpdateContext<'_, 'gc>) {
         #[derive(Debug)]
         enum SocketAction {
             Connect(XmlSocketHandle, bool),
