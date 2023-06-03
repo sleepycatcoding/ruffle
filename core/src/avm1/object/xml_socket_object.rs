@@ -62,7 +62,7 @@ impl<'gc> TObject<'gc> for XmlSocketObject<'gc> {
 
     fn create_bare_object(
         &self,
-        activation: &mut Activation<'_, 'gc, '_>,
+        activation: &mut Activation<'_, 'gc>,
         this: Object<'gc>,
     ) -> Result<Object<'gc>, Error<'gc>> {
         Ok(Self(GcCell::allocate(

@@ -545,7 +545,7 @@ pub fn create_globals<'gc>(
 
     let xml_proto = xml::create_proto(context, xmlnode_proto, function_proto);
 
-    let xml_socket_proto = xml_socket::create_proto(gc_context, object_proto, function_proto);
+    let xml_socket_proto = xml_socket::create_proto(context, object_proto, function_proto);
 
     let string_proto = string::create_proto(context, object_proto, function_proto);
     let number_proto = number::create_proto(context, object_proto, function_proto);
@@ -681,7 +681,7 @@ pub fn create_globals<'gc>(
         gc_context,
         Executable::Native(xml_socket::constructor),
         constructor_to_fn!(xml_socket::constructor),
-        Some(function_proto),
+        function_proto,
         xml_socket_proto,
     );
     let string = string::create_string_object(context, string_proto, function_proto);
