@@ -1,23 +1,23 @@
 package flash.net {
     import flash.events.EventDispatcher;
-    import __ruffle__.stub_constructor;
-    import __ruffle__.stub_method;
 
     public class XMLSocket extends EventDispatcher {
         public function XMLSocket(host: String = null, port: int = 0) {
-            stub_constructor("flash.net.XMLSocket");
+            this.timeout = 20000;
+            if (host != null) {
+                this.connect(host, port);
+            }
         }
 
-        public function close(): void {
-            stub_method("flash.net.XMLSocket", "close");
-        }
+        public native function get timeout():int;
+        public native function set timeout(value:int):void;
 
-        public function connect(host: String, port: int): void {
-            stub_method("flash.net.XMLSocket", "connect");
-        }
+        public native function get connected():Boolean;
 
-        public function send(object: *): void {
-            stub_method("flash.net.XMLSocket", "send");
-        }
+        public native function close():void;
+
+        public native function connect(host: String, port: int):void;
+
+        public native function send(object: *): void;
     }
 }
