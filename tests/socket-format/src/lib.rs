@@ -17,27 +17,57 @@ const fn bool_false() -> bool {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "type")]
 pub enum RawValue {
-    Float { val: f32, endian: Endian },
+    Float {
+        val: f32,
+        endian: Endian,
+    },
 
-    Double { val: f64, endian: Endian },
+    Double {
+        val: f64,
+        endian: Endian,
+    },
 
-    Int { val: i32, endian: Endian },
+    Int {
+        val: i32,
+        endian: Endian,
+    },
 
-    UnsignedInt { val: u32, endian: Endian },
+    UnsignedInt {
+        val: u32,
+        endian: Endian,
+    },
 
-    Short { val: i16, endian: Endian },
+    Short {
+        val: i16,
+        endian: Endian,
+    },
 
-    UnsignedShort { val: u16, endian: Endian },
+    UnsignedShort {
+        val: u16,
+        endian: Endian,
+    },
 
-    Byte { val: i8 },
+    Byte {
+        val: i8,
+    },
 
-    UnsignedByte { val: u8 },
+    UnsignedByte {
+        val: u8,
+    },
 
-    Boolean { val: bool },
+    Boolean {
+        val: bool,
+    },
 
-    Bytes { val: Vec<u8> },
+    Bytes {
+        val: Vec<u8>,
+    },
 
-    String { val: String, #[serde(default = "bool_false")] null_terminated: bool },
+    String {
+        val: String,
+        #[serde(default = "bool_false")]
+        null_terminated: bool,
+    },
 }
 
 impl RawValue {
