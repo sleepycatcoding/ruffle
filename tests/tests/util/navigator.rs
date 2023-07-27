@@ -8,7 +8,7 @@ use ruffle_core::backend::navigator::{
 use ruffle_core::indexmap::IndexMap;
 use ruffle_core::loader::Error;
 use ruffle_core::socket::{ConnectionState, SocketAction, SocketHandle};
-use ruffle_socket_format::SocketEvent;
+use ruffle_socket_format::{SocketEvent, VecExt};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::{Receiver, Sender, TryRecvError};
 use std::time::Duration;
@@ -161,7 +161,7 @@ impl NavigatorBackend for TestNavigatorBackend {
                             }
                         },
                         SocketEvent::Send { payload } => {
-                            sender.send(SocketAction::Data(handle, payload)).expect("working channel send");
+                            sender.send(SocketAction::Data(handle, payload.to_bytes())).expect("working channel send");
                         }
                     }
                 }
