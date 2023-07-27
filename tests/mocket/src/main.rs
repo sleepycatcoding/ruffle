@@ -1,6 +1,6 @@
 use anyhow::Error;
 use clap::Parser;
-use ruffle_socket_format::SocketEvent;
+use ruffle_socket_format::{SocketEvent, VecExt};
 use std::{
     io::{Read, Write},
     net::TcpListener,
@@ -87,7 +87,9 @@ fn main() -> Result<(), Error> {
                     );
                 }
             }
-            SocketEvent::Send { mut payload } => {
+            SocketEvent::Send { payload } => {
+                let mut payload = payload.to_bytes();
+
                 while !payload.is_empty() {
                     match stream.write(&payload) {
                         Err(_) | Ok(0) => {
