@@ -1,5 +1,5 @@
 use crate::avm2::bytearray::{Endian, ObjectEncoding};
-use crate::avm2::error::{io_error, make_error_2008, security_error};
+use crate::avm2::error::{invalid_socket_error, make_error_2008, security_error};
 pub use crate::avm2::object::socket_allocator;
 use crate::avm2::parameters::ParametersExt;
 use crate::avm2::string::AvmString;
@@ -729,17 +729,6 @@ pub fn write_utf_bytes<'gc>(
     }
 
     Ok(Value::Undefined)
-}
-
-fn invalid_socket_error<'gc>(activation: &mut Activation<'_, 'gc>) -> Error<'gc> {
-    match io_error(
-        activation,
-        "Error #2002: Operation attempted on invalid socket.",
-        2002,
-    ) {
-        Ok(err) => Error::AvmError(err),
-        Err(e) => e,
-    }
 }
 
 fn invalid_port_number<'gc>(activation: &mut Activation<'_, 'gc>) -> Error<'gc> {

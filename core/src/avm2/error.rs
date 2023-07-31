@@ -245,6 +245,19 @@ pub fn io_error<'gc>(
 
 #[inline(never)]
 #[cold]
+pub fn invalid_socket_error<'gc>(activation: &mut Activation<'_, 'gc>) -> Error<'gc> {
+    match io_error(
+        activation,
+        "Error #2002: Operation attempted on invalid socket.",
+        2002,
+    ) {
+        Ok(err) => Error::AvmError(err),
+        Err(e) => e,
+    }
+}
+
+#[inline(never)]
+#[cold]
 pub fn eof_error<'gc>(
     activation: &mut Activation<'_, 'gc>,
     message: &str,
