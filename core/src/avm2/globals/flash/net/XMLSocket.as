@@ -1,6 +1,7 @@
 package flash.net {
     import flash.events.EventDispatcher;
 
+    [Ruffle(InstanceAllocator)]
     public class XMLSocket extends EventDispatcher {
         public function XMLSocket(host: String = null, port: int = 0) {
             this.timeout = 20000;

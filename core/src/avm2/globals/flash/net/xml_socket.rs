@@ -1,3 +1,4 @@
+pub use crate::avm2::object::xml_socket_allocator;
 use crate::avm2::{Activation, Error, Object, Value};
 use crate::{avm2_stub_getter, avm2_stub_method, avm2_stub_setter};
 

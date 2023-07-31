@@ -63,6 +63,7 @@ mod vector_object;
 mod vertex_buffer_3d_object;
 mod xml_list_object;
 mod xml_object;
+mod xml_socket_object;
 
 pub use crate::avm2::object::array_object::{array_allocator, ArrayObject, ArrayObjectWeak};
 pub use crate::avm2::object::bitmapdata_object::{
@@ -132,6 +133,9 @@ pub use crate::avm2::object::xml_list_object::{
     xml_list_allocator, E4XOrXml, XmlListObject, XmlListObjectWeak,
 };
 pub use crate::avm2::object::xml_object::{xml_allocator, XmlObject, XmlObjectWeak};
+pub use crate::avm2::object::xml_socket_object::{
+    xml_socket_allocator, XmlSocketObject, XmlSocketObjectWeak,
+};
 
 /// Represents an object that can be directly interacted with by the AVM2
 /// runtime.
@@ -173,7 +177,8 @@ pub use crate::avm2::object::xml_object::{xml_allocator, XmlObject, XmlObjectWea
         Program3DObject(Program3DObject<'gc>),
         NetStreamObject(NetStreamObject<'gc>),
         ShaderDataObject(ShaderDataObject<'gc>),
-        SocketObject(SocketObject<'gc>)
+        SocketObject(SocketObject<'gc>),
+        XmlSocketObject(XmlSocketObject<'gc>),
     }
 )]
 pub trait TObject<'gc>: 'gc + Collect + Debug + Into<Object<'gc>> + Clone + Copy {
@@ -1376,6 +1381,10 @@ pub trait TObject<'gc>: 'gc + Collect + Debug + Into<Object<'gc>> + Clone + Copy
     fn as_socket(&self) -> Option<SocketObject<'gc>> {
         None
     }
+
+    fn as_xml_socket(&self) -> Option<XmlSocketObject<'gc>> {
+        None
+    }
 }
 
 pub enum ObjectPtr {}
@@ -1421,7 +1430,8 @@ impl<'gc> Object<'gc> {
             Self::Program3DObject(o) => WeakObject::Program3DObject(Program3DObjectWeak(Gc::downgrade(o.0))),
             Self::NetStreamObject(o) => WeakObject::NetStreamObject(NetStreamObjectWeak(GcCell::downgrade(o.0))),
             Self::ShaderDataObject(o) => WeakObject::ShaderDataObject(ShaderDataObjectWeak(Gc::downgrade(o.0))),
-            Self::SocketObject(o) => WeakObject::SocketObject(SocketObjectWeak(Gc::downgrade(o.0)))
+            Self::SocketObject(o) => WeakObject::SocketObject(SocketObjectWeak(Gc::downgrade(o.0))),
+            Self::XmlSocketObject(o) => WeakObject::XmlSocketObject(XmlSocketObjectWeak(Gc::downgrade(o.0))),
         }
     }
 }
@@ -1478,6 +1488,7 @@ pub enum WeakObject<'gc> {
     NetStreamObject(NetStreamObjectWeak<'gc>),
     ShaderDataObject(ShaderDataObjectWeak<'gc>),
     SocketObject(SocketObjectWeak<'gc>),
+    XmlSocketObject(XmlSocketObjectWeak<'gc>),
 }
 
 impl<'gc> WeakObject<'gc> {
@@ -1517,6 +1528,7 @@ impl<'gc> WeakObject<'gc> {
             Self::NetStreamObject(o) => NetStreamObject(o.0.upgrade(mc)?).into(),
             Self::ShaderDataObject(o) => ShaderDataObject(o.0.upgrade(mc)?).into(),
             Self::SocketObject(o) => SocketObject(o.0.upgrade(mc)?).into(),
+            Self::XmlSocketObject(o) => XmlSocketObject(o.0.upgrade(mc)?).into(),
         })
     }
 }
