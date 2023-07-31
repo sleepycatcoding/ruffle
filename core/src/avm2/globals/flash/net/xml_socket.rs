@@ -1,6 +1,7 @@
 pub use crate::avm2::object::xml_socket_allocator;
-use crate::avm2::{Activation, Error, Object, Value};
-use crate::{avm2_stub_getter, avm2_stub_method, avm2_stub_setter};
+use crate::avm2::parameters::ParametersExt;
+use crate::avm2::{Activation, Error, Object, TObject, Value};
+use crate::{avm2_stub_getter, avm2_stub_method};
 
 pub fn get_connected<'gc>(
     activation: &mut Activation<'_, 'gc>,
@@ -13,19 +14,26 @@ pub fn get_connected<'gc>(
 
 pub fn get_timeout<'gc>(
     activation: &mut Activation<'_, 'gc>,
-    _this: Object<'gc>,
+    this: Object<'gc>,
     _args: &[Value<'gc>],
 ) -> Result<Value<'gc>, Error<'gc>> {
-    avm2_stub_getter!(activation, "flash.net.XMLSocket", "timeout");
+    if let Some(xml_socket) = this.as_xml_socket() {
+        return Ok(xml_socket.timeout().into());
+    }
+
     Ok(Value::Undefined)
 }
 
 pub fn set_timeout<'gc>(
     activation: &mut Activation<'_, 'gc>,
-    _this: Object<'gc>,
-    _args: &[Value<'gc>],
+    this: Object<'gc>,
+    args: &[Value<'gc>],
 ) -> Result<Value<'gc>, Error<'gc>> {
-    avm2_stub_setter!(activation, "flash.net.XMLSocket", "timeout");
+    if let Some(xml_socket) = this.as_xml_socket() {
+        let new_timeout = args.get_u32(activation, 0)?;
+        xml_socket.set_timeout(new_timeout);
+    }
+
     Ok(Value::Undefined)
 }
 

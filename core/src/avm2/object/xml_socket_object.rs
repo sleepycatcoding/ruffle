@@ -56,6 +56,26 @@ impl<'gc> TObject<'gc> for XmlSocketObject<'gc> {
     }
 }
 
+impl<'gc> XmlSocketObject<'gc> {
+    pub fn timeout(&self) -> u32 {
+        self.0.timeout.get()
+    }
+
+    pub fn set_timeout(&self, timeout: u32) {
+        // NOTE: When a timeout of smaller than 250 milliseconds is provided,
+        //       we clamp it to 250 milliseconds.
+        self.0.timeout.set(std::cmp::max(250, timeout));
+    }
+
+    pub fn handle(&self) -> Option<SocketHandle> {
+        self.0.handle.get()
+    }
+
+    pub fn set_handle(&self, handle: SocketHandle) -> Option<SocketHandle> {
+        self.0.handle.replace(Some(handle))
+    }
+}
+
 #[derive(Collect)]
 #[collect(no_drop)]
 pub struct XmlSocketObjectData<'gc> {
