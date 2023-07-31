@@ -1,3 +1,4 @@
+use crate::avm2::error::invalid_socket_error;
 pub use crate::avm2::object::xml_socket_allocator;
 use crate::avm2::parameters::ParametersExt;
 use crate::avm2::{Activation, Error, Object, TObject, Value};
@@ -60,10 +61,24 @@ pub fn connect<'gc>(
 
 pub fn close<'gc>(
     activation: &mut Activation<'_, 'gc>,
-    _this: Object<'gc>,
+    this: Object<'gc>,
     _args: &[Value<'gc>],
 ) -> Result<Value<'gc>, Error<'gc>> {
-    avm2_stub_method!(activation, "flash.net.XMLSocket", "close");
+    if let Some(xml_socket) = this.as_xml_socket() {
+        // We throw an IOError when socket is not open.
+        let handle = xml_socket
+            .handle()
+            .ok_or(invalid_socket_error(activation))?;
+
+        if !activation.context.sockets.is_connected(handle) {
+            return Err(invalid_socket_error(activation));
+        }
+
+        let UpdateContext { sockets, .. } = &mut activation.context;
+
+        sockets.close(handle)
+    }
+
     Ok(Value::Undefined)
 }
 
