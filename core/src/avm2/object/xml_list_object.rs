@@ -504,9 +504,27 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
         if write.children.len() <= 1 {
             // 3.a. If x.[[Length]] == 0
             if write.children.is_empty() {
-                return Err(
-                    "Modifying an XMLList object is not yet implemented: need to resolve".into(),
-                );
+                // 3.a.i. Let r be the result of calling the [[ResolveValue]] method of x
+                let r = self.resolve_value(activation);
+
+                // 3.a.ii. If (r == null) or (r.[[Length]] is not equal to 1), return
+                let Some(r) = r else {
+                    return Ok(());
+                };
+                let length = if let Some(list) = r.as_xml_list_object() {
+                    list.length()
+                } else if let Some(_xml) = r.as_xml_object() {
+                    1
+                } else {
+                    unreachable!()
+                };
+
+                if length != 1 {
+                    return Ok(());
+                }
+
+                // 3.a.iii. Call the [[Append]] method of x with argument r
+                self.append(activation, r)
             }
 
             // 3.b. Call the [[Put]] method of x[0] with arguments P and V
