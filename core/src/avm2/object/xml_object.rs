@@ -82,6 +82,11 @@ impl<'gc> XmlObject<'gc> {
         Ref::map(self.0.read(), |data| &data.node)
     }
 
+    // ECMA-357 9.1.1.10 [[ResolveValue]] ( )
+    pub fn resolve_value(&self) -> Option<Object<'gc>> {
+        Some(Object::XmlObject(*self))
+    }
+
     pub fn equals(
         &self,
         other: &Value<'gc>,
@@ -172,6 +177,8 @@ impl<'gc> TObject<'gc> for XmlObject<'gc> {
             activation,
             descendants,
             Some((*self).into()),
+            // FIXME: Check spec to see if we need to copy that to
+            None
         ))
     }
 
@@ -221,7 +228,8 @@ impl<'gc> TObject<'gc> for XmlObject<'gc> {
             Vec::new()
         };
 
-        return Ok(XmlListObject::new(activation, matched_children, Some(self.into())).into());
+        // FIXME: Check spec to see if we need to copy that to
+        return Ok(XmlListObject::new(activation, matched_children, Some(self.into()), None).into());
     }
 
     fn call_property_local(

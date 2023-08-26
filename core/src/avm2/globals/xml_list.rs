@@ -176,7 +176,8 @@ pub fn child<'gc>(
             );
         }
     }
-    Ok(XmlListObject::new(activation, sub_children, Some(list.into())).into())
+    // FIXME: Check spec to see if we need to copy that to
+    Ok(XmlListObject::new(activation, sub_children, Some(list.into()), None).into())
 }
 
 pub fn children<'gc>(
@@ -192,7 +193,8 @@ pub fn children<'gc>(
             sub_children.extend(children.iter().map(|node| E4XOrXml::E4X(*node)));
         }
     }
-    Ok(XmlListObject::new(activation, sub_children, Some(list.into())).into())
+    // FIXME: Check spec to see if we need to copy that to
+    Ok(XmlListObject::new(activation, sub_children, Some(list.into()), None).into())
 }
 
 pub fn copy<'gc>(
@@ -206,7 +208,8 @@ pub fn copy<'gc>(
         .iter()
         .map(|child| E4XOrXml::E4X(child.node().deep_copy(activation.context.gc_context)))
         .collect();
-    Ok(XmlListObject::new(activation, children, list.target()).into())
+    // FIXME: Check spec to see if we need to copy that to
+    Ok(XmlListObject::new(activation, children, list.target_object(), None).into())
 }
 
 pub fn attribute<'gc>(
@@ -232,7 +235,8 @@ pub fn attribute<'gc>(
             }
         }
     }
-    Ok(XmlListObject::new(activation, sub_children, Some(list.into())).into())
+    // FIXME: Check spec to see if we need to copy that to
+    Ok(XmlListObject::new(activation, sub_children, Some(list.into()), None).into())
 }
 
 pub fn attributes<'gc>(
@@ -249,7 +253,8 @@ pub fn attributes<'gc>(
         }
     }
 
-    Ok(XmlListObject::new(activation, child_attrs, Some(list.into())).into())
+    // FIXME: Check spec to see if we need to copy that to
+    Ok(XmlListObject::new(activation, child_attrs, Some(list.into()), None).into())
 }
 
 pub fn name<'gc>(
@@ -304,7 +309,8 @@ pub fn text<'gc>(
             );
         }
     }
-    Ok(XmlListObject::new(activation, nodes, Some(xml_list.into())).into())
+    // FIXME: Check spec to see if we need to copy that to
+    Ok(XmlListObject::new(activation, nodes, Some(xml_list.into()), None).into())
 }
 
 pub fn comments<'gc>(
@@ -324,7 +330,8 @@ pub fn comments<'gc>(
             );
         }
     }
-    Ok(XmlListObject::new(activation, nodes, Some(xml_list.into())).into())
+    // FIXME: Check spec to see if we need to copy that to
+    Ok(XmlListObject::new(activation, nodes, Some(xml_list.into()), None).into())
 }
 
 pub fn processing_instructions<'gc>(
@@ -348,6 +355,6 @@ pub fn processing_instructions<'gc>(
             );
         }
     }
-
-    Ok(XmlListObject::new(activation, nodes, Some(xml_list.into())).into())
+    // FIXME: Check spec to see if we need to copy that to
+    Ok(XmlListObject::new(activation, nodes, Some(xml_list.into()), None).into())
 }
