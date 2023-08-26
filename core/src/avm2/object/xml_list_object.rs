@@ -405,8 +405,7 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
             })
             .collect();
 
-        // FIXME: Check spec to see if we need to copy that to
-        Ok(XmlListObject::new(activation, matched_children, Some(self.into()), None).into())
+        Ok(XmlListObject::new(activation, matched_children, Some(self.into()), Some(name.clone())).into())
     }
 
     fn call_property_local(

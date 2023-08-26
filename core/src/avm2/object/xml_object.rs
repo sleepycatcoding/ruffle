@@ -228,8 +228,7 @@ impl<'gc> TObject<'gc> for XmlObject<'gc> {
             Vec::new()
         };
 
-        // FIXME: Check spec to see if we need to copy that to
-        return Ok(XmlListObject::new(activation, matched_children, Some(self.into()), None).into());
+        return Ok(XmlListObject::new(activation, matched_children, Some(self.into()), Some(name.clone())).into());
     }
 
     fn call_property_local(

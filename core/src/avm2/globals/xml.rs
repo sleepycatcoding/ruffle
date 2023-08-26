@@ -231,8 +231,7 @@ pub fn elements<'gc>(
     } else {
         Vec::new()
     };
-    // FIXME: Check spec to see if we need to copy that to
-    Ok(XmlListObject::new(activation, children, Some(xml.into()), None).into())
+    Ok(XmlListObject::new(activation, children, Some(xml.into()), Some(multiname)).into())
 }
 
 pub fn attributes<'gc>(
@@ -414,7 +413,6 @@ pub fn text<'gc>(
     } else {
         Vec::new()
     };
-    // FIXME: Check spec to see if we need to copy that to
     Ok(XmlListObject::new(activation, nodes, Some(xml.into()), None).into())
 }
 
@@ -461,7 +459,6 @@ pub fn comments<'gc>(
     } else {
         Vec::new()
     };
-    // FIXME: Check spec to see if we need to copy that to
     Ok(XmlListObject::new(activation, comments, Some(xml.into()), None).into())
 }
 
@@ -484,6 +481,5 @@ pub fn processing_instructions<'gc>(
     } else {
         Vec::new()
     };
-    // FIXME: Check spec to see if we need to copy that to
     Ok(XmlListObject::new(activation, nodes, Some(xml.into()), None).into())
 }
