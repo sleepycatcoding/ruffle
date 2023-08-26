@@ -590,7 +590,7 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
                     }
 
                     // 2.d. If (Type(V) ∉ {XML, XMLList}) or (V.[[Class]] ∈ {"text", "attribute"}), let V = ToString(V)
-                    let children = self.children();
+                    let mut children = self.children_mut(activation.gc());
 
                     // 2.e. If x[i].[[Class]] == "attribute"
                     if matches!(*children[index].node().kind(), E4XNodeKind::Attribute(_)) {
@@ -634,21 +634,34 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
                         )
                     {
                         // 2.g.i. Let parent = x[i].[[Parent]]
+                        let parent = children[index].node().parent();
                         // 2.g.ii. If parent is not null
-                        // 2.g.ii.1. Let q be the property of parent, such that parent[q] is the same object as x[i]
-                        // 2.g.ii.2. Call the [[Replace]] method of parent with arguments q and V
-                        // 2.g.ii.3. Let V = parent[q]
-                        // 2.g.iii. If Type(V) is String
-                        // 2.g.iii.1. Create a new XML object t with t.[[Class]] = "text", t.[[Parent]] = x and t.[[Value]] = V
-                        // 2.g.iii.2. Let x[i] = t
-                        // 2.g.iv. Else
-                        // 2.g.iv.1. Let x[i] = V
+                        if let Some(_parent) = parent {
+                            // 2.g.ii.1. Let q be the property of parent, such that parent[q] is the same object as x[i]
+                            // 2.g.ii.2. Call the [[Replace]] method of parent with arguments q and V
+                            // 2.g.ii.3. Let V = parent[q]
+                            return Err(Error::RustError("Cannot modify XmlListObject entry that has a parent (yet)".into()));
+                        }
 
-                        return Err(Error::RustError("TODO".into()));
+                        // 2.g.iii. If Type(V) is String
+                        if let Value::String(s) = value {
+                            // 2.g.iii.1. Create a new XML object t with t.[[Class]] = "text", t.[[Parent]] = x and t.[[Value]] = V
+                            // FIXME: Set parent as self.
+                            let val = E4XNode::text(activation.gc(), s, None);
+
+                            // 2.g.iii.2. Let x[i] = t
+                            children[index] = E4XOrXml::E4X(val);
+                        // 2.g.iv. Else
+                        } else if let Some(xml) = value.as_object().and_then(|x| x.as_xml_object()) {
+                            // 2.g.iv.1. Let x[i] = V
+                            children[index] = E4XOrXml::Xml(xml);
+                        } else {
+                            return Err(Error::RustError(format!("Unknown value type: {:?}", value).into()));
+                        }
                     // 2.h. Else
                     } else {
                         // 2.h.i. Call the [[Put]] method of x[i] with arguments "*" and V
-                        return Err(Error::RustError("Fallback else not implemented".into()));
+                        children[index].get_or_create_xml(activation).set_property_local(&Multiname::any(activation.gc()), value, activation)?;
                     }
                 }
             }
