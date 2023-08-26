@@ -466,15 +466,13 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
         value: Value<'gc>,
         activation: &mut Activation<'_, 'gc>,
     ) -> Result<(), Error<'gc>> {
-        let mut write = self.0.write(activation.context.gc_context);
-
         // 1. Let i = ToUint32(P)
         // 2. If ToString(i) == P
         if !name.is_any_name() && !name.is_attribute() {
             if let Some(local_name) = name.local_name() {
                 if let Ok(index) = local_name.parse::<usize>() {
                     // 2.a. If x.[[TargetObject]] is not null
-                    if let Some(target) = write.target_object {
+                    if let Some(target) = self.target_object() {
                         return Err(format!(
                             "Modifying an XMLList object is not yet implemented: target {:?}",
                             target
@@ -482,10 +480,11 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
                         .into());
                     }
 
-                    if index >= write.children.len() {
+                    if index >= self.length() {
                         if let Some(value_xml) =
                             value.as_object().and_then(|obj| obj.as_xml_object())
                         {
+                            let mut write = self.0.write(activation.context.gc_context);
                             write.children.push(E4XOrXml::Xml(value_xml));
                             return Ok(());
                         }
@@ -501,9 +500,9 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
         }
 
         // 3. Else if x.[[Length]] is less than or equal to 1
-        if write.children.len() <= 1 {
+        if self.length() <= 1 {
             // 3.a. If x.[[Length]] == 0
-            if write.children.is_empty() {
+            if self.length() == 0 {
                 // 3.a.i. Let r be the result of calling the [[ResolveValue]] method of x
                 let r = self.resolve_value(activation);
 
@@ -528,6 +527,7 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
             }
 
             // 3.b. Call the [[Put]] method of x[0] with arguments P and V
+            let mut write = self.0.write(activation.context.gc_context);
             let xml = write.children[0].get_or_create_xml(activation);
             return xml.set_property_local(name, value, activation);
         }
