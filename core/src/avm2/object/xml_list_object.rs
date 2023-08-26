@@ -62,7 +62,7 @@ impl<'gc> XmlListObject<'gc> {
                 base,
                 children,
                 target_object,
-                target_property
+                target_property,
             },
         ))
     }
@@ -166,7 +166,10 @@ impl<'gc> XmlListObject<'gc> {
         };
 
         // 2.d. Let target be the result of calling [[Get]] on base with argument x.[[TargetProperty]]
-        let mut target = base.get_property_local(&target_property, activation).ok()?.as_object()?;
+        let mut target = base
+            .get_property_local(&target_property, activation)
+            .ok()?
+            .as_object()?;
 
         let length = if let Some(xml_list) = target.as_xml_list_object() {
             xml_list.length()
@@ -191,7 +194,10 @@ impl<'gc> XmlListObject<'gc> {
             base.set_property_local(&target_property, "".into(), activation);
 
             // 2.e.iii. Let target be the result of calling [[Get]] on base with argument x.[[TargetProperty]]
-            target = base.get_property_local(&target_property, activation).ok()?.as_object()?;
+            target = base
+                .get_property_local(&target_property, activation)
+                .ok()?
+                .as_object()?;
         }
 
         // 2.f. Return target
@@ -405,7 +411,13 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
             })
             .collect();
 
-        Ok(XmlListObject::new(activation, matched_children, Some(self.into()), Some(name.clone())).into())
+        Ok(XmlListObject::new(
+            activation,
+            matched_children,
+            Some(self.into()),
+            Some(name.clone()),
+        )
+        .into())
     }
 
     fn call_property_local(
@@ -510,7 +522,7 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
                         // 2.c.ii. If r.[[Class]] is not equal to "element", return
                         if let Some(r) = r {
                             if !matches!(*r.kind(), E4XNodeKind::Element { .. }) {
-                                return Ok(())
+                                return Ok(());
                             }
                         }
 
@@ -523,22 +535,29 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
                                 // 2.c.iv.1. Let attributeExists be the result of calling the [[Get]] method of r with argument y.[[Name]]
                                 // 2.c.iv.2. If (attributeExists.[[Length]] > 0), return
                                 // 2.c.iv.3. Let y.[[Class]] = "attribute"
-                                return Err(Error::RustError("Cannot handle attribute target property (yet)".into()));
-                            },
-                            // 2.c.v. Else if x.[[TargetProperty]] == null 
-                            None => {
-                                E4XNode::text(activation.gc(), "".into(), r)
-                            },
+                                return Err(Error::RustError(
+                                    "Cannot handle attribute target property (yet)".into(),
+                                ));
+                            }
+                            // 2.c.v. Else if x.[[TargetProperty]] == null
+                            None => E4XNode::text(activation.gc(), "".into(), r),
                             //        or x.[[TargetProperty]].localName == "*"
                             Some(property) if { property.is_any_name() } => {
                                 E4XNode::text(activation.gc(), "".into(), r)
-                            },
+                            }
                             // 2.c.vi Else let y.[[Class]] = "element"
                             Some(property) => {
                                 // FIXME: Expects shouldn't exist here.
                                 // FIXME: Handle namespaces.
-                                E4XNode::element(activation.gc(), None, property.local_name().expect("TargetProperty should have localName"), r.expect("Should have parent"))
-                            },
+                                E4XNode::element(
+                                    activation.gc(),
+                                    None,
+                                    property
+                                        .local_name()
+                                        .expect("TargetProperty should have localName"),
+                                    r.expect("Should have parent"),
+                                )
+                            }
                         };
 
                         // 2.c.vii. Let i = x.[[Length]]
@@ -555,7 +574,9 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
                                 // 2.c.viii.1.b.i Let j = r.[[Length]]-1
                                 // 2.c.viii.1.c. Call the [[Insert]] method of r with arguments ToString(j+1) and y
 
-                                return Err(Error::RustError(format!("Cannot insert elements (yet): {:?}", r).into()));
+                                return Err(Error::RustError(
+                                    format!("Cannot insert elements (yet): {:?}", r).into(),
+                                ));
                             }
 
                             // 2.c.viii.2. If Type(V) is XML, let y.[[Name]] = V.[[Name]]
@@ -578,9 +599,13 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
                         // 2.e.iii. Let attr be the result of calling [[Get]] on x[i].[[Parent]] with argument z
                         // 2.e.iv. Let x[i] = attr[0]
 
-                        return Err(Error::RustError(format!("Cannot update attribute yet").into()));
+                        return Err(Error::RustError(
+                            format!("Cannot update attribute yet").into(),
+                        ));
                     // 2.e.f. Else if Type(V) is XMLList
-                    } else if let Some(_list) = value.as_object().and_then(|x| x.as_xml_list_object()) {
+                    } else if let Some(_list) =
+                        value.as_object().and_then(|x| x.as_xml_list_object())
+                    {
                         // 2.e.f.i. Create a shallow copy c of V
                         // 2.e.f.ii. Let parent = x[i].[[Parent]]
                         // 2.e.f.iii. If parent is not null
@@ -596,9 +621,18 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
                         // 2.e.f.vi. For j = 0 to c.[[Length]]-1, let x[i + j] = c[j]
                         // 2.e.f.vii. Let x.[[Length]] = x.[[Length]] + c.[[Length]] - 1
 
-                        return Err(Error::RustError("Modifying is not yet supported for XmlListObject value".into()));
+                        return Err(Error::RustError(
+                            "Modifying is not yet supported for XmlListObject value".into(),
+                        ));
                     // 2.g. Else if (Type(V) is XML) or (x[i].[[Class]] ∈ {"text", "comment", "processing-instruction"})
-                    } else if value.as_object().and_then(|x| x.as_xml_object()).is_some() || matches!(*children[index].node().kind(), E4XNodeKind::Text(_) | E4XNodeKind::Comment(_) | E4XNodeKind::ProcessingInstruction(_)) {
+                    } else if value.as_object().and_then(|x| x.as_xml_object()).is_some()
+                        || matches!(
+                            *children[index].node().kind(),
+                            E4XNodeKind::Text(_)
+                                | E4XNodeKind::Comment(_)
+                                | E4XNodeKind::ProcessingInstruction(_)
+                        )
+                    {
                         // 2.g.i. Let parent = x[i].[[Parent]]
                         // 2.g.ii. If parent is not null
                         // 2.g.ii.1. Let q be the property of parent, such that parent[q] is the same object as x[i]
