@@ -230,6 +230,20 @@ pub fn make_error_1506<'gc>(activation: &mut Activation<'_, 'gc>) -> Error<'gc> 
 
 #[inline(never)]
 #[cold]
+pub fn make_error_2007<'gc>(activation: &mut Activation<'_, 'gc>, name: &str) -> Error<'gc> {
+    let error = type_error(
+        activation,
+        &format!("Error #2007: Parameter {name} must be non-null."),
+        2007,
+    );
+    match error {
+        Err(e) => e,
+        Ok(e) => Error::AvmError(e),
+    }
+}
+
+#[inline(never)]
+#[cold]
 pub fn make_error_2008<'gc>(activation: &mut Activation<'_, 'gc>, param_name: &str) -> Error<'gc> {
     let err = argument_error(
         activation,
