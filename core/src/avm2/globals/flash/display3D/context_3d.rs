@@ -1,4 +1,4 @@
-use crate::avm2::error::{argument_error, error, make_error_2008};
+use crate::avm2::error::{error, make_error_2008};
 use crate::avm2::parameters::ParametersExt;
 use crate::avm2::Activation;
 use crate::avm2::TObject;
@@ -148,11 +148,7 @@ pub fn set_vertex_buffer_at<'gc>(
             } else if &*format == b"bytes4" {
                 Context3DVertexBufferFormat::Bytes4
             } else {
-                return Err(Error::AvmError(argument_error(
-                    activation,
-                    "Error #2008: Parameter vertexStreamFormat must be one of the accepted values.",
-                    2008,
-                )?));
+                return Err(make_error_2008(activation, "vertexStreamFormat"));
             };
 
             Some((
