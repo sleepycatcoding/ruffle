@@ -289,6 +289,9 @@ struct Config {
     open_url_mode: OpenURLMode,
 
     allow_networking: NetworkingAccessMode,
+
+    #[serde(with = "serde_wasm_bindgen::preserve")]
+    socket_callback: js_sys::Function,
 }
 
 /// Metadata about the playing SWF file to be passed back to JavaScript.
@@ -542,6 +545,7 @@ impl Ruffle {
             config.base_url,
             log_subscriber.clone(),
             config.open_url_mode,
+            config.socket_callback,
         ));
 
         match window.local_storage() {

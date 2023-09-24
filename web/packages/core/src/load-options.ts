@@ -248,6 +248,16 @@ export const enum NetworkingAccessMode {
     None = "none",
 }
 
+export interface SocketConnectOptions {
+    host: string,
+    port: number,
+
+    readable: ReadableStream<Uint8Array>,
+    writable: WritableStream<Uint8Array>,
+}
+
+type SocketCallback = (options: SocketConnectOptions) => Promise<Boolean>;
+
 /**
  * Any options used for loading a movie.
  */
@@ -528,6 +538,8 @@ export interface BaseLoadOptions {
      * @default null
      */
     openInNewTab?: ((swf: URL) => void) | null;
+
+    socketCallback?: SocketCallback;
 }
 
 /**

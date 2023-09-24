@@ -1,6 +1,6 @@
 //! Navigator backend for web
 use async_channel::Receiver;
-use js_sys::{Array, ArrayBuffer, Uint8Array};
+use js_sys::{Array, ArrayBuffer, Uint8Array, Promise, Function};
 use ruffle_core::backend::navigator::{
     async_return, create_fetch_error, create_specific_fetch_error, ErrorResponse, NavigationMethod,
     NavigatorBackend, OpenURLMode, OwnedFuture, Request, SuccessResponse,
@@ -9,6 +9,7 @@ use ruffle_core::config::NetworkingAccessMode;
 use ruffle_core::indexmap::IndexMap;
 use ruffle_core::loader::Error;
 use ruffle_core::socket::{ConnectionState, SocketAction, SocketHandle};
+use std::rc::Rc;
 use std::sync::mpsc::Sender;
 use std::sync::Arc;
 use std::time::Duration;
@@ -16,7 +17,7 @@ use tracing_subscriber::layer::Layered;
 use tracing_subscriber::Registry;
 use tracing_wasm::WASMLayer;
 use url::{ParseError, Url};
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{JsCast, JsValue, prelude::wasm_bindgen};
 use wasm_bindgen_futures::{spawn_local, JsFuture};
 use web_sys::{
     window, Blob, BlobPropertyBag, HtmlFormElement, HtmlInputElement, Request as WebRequest,
@@ -30,6 +31,7 @@ pub struct WebNavigatorBackend {
     upgrade_to_https: bool,
     base_url: Option<Url>,
     open_url_mode: OpenURLMode,
+    socket_callback: Function,
 }
 
 impl WebNavigatorBackend {
@@ -40,6 +42,7 @@ impl WebNavigatorBackend {
         base_url: Option<String>,
         log_subscriber: Arc<Layered<WASMLayer, Registry>>,
         open_url_mode: OpenURLMode,
+        socket_callback: Function,
     ) -> Self {
         let window = web_sys::window().expect("window()");
 
@@ -81,6 +84,7 @@ impl WebNavigatorBackend {
             base_url,
             log_subscriber,
             open_url_mode,
+            socket_callback
         }
     }
 }
@@ -362,16 +366,177 @@ impl NavigatorBackend for WebNavigatorBackend {
 
     fn connect_socket(
         &mut self,
-        _host: String,
-        _port: u16,
+        host: String,
+        port: u16,
         _timeout: Duration,
         handle: SocketHandle,
-        _receiver: Receiver<Vec<u8>>,
+        receiver: Receiver<Vec<u8>>,
         sender: Sender<SocketAction>,
     ) {
-        // FIXME: Add way to call out to JS code.
-        sender
-            .send(SocketAction::Connect(handle, ConnectionState::Failed))
-            .expect("working channel send");
+        let out_stream = ReadableStream::new(WrappedReceiver { inner: Rc::new(receiver) }, QueuingStrategy { high_water_mark: 0.0 });
+        let in_stream = WritableStream::new(WrappedSender { inner: sender.clone(), handle }, QueuingStrategy { high_water_mark: 1.0 });
+
+        let options = SocketConnectOptions {
+            host,
+            port,
+            readable: out_stream.into(),
+            writable: in_stream.into(),
+        };
+        let options = match serde_wasm_bindgen::to_value(&options) {
+            Ok(x) => x,
+            Err(e) => {
+                sender.send(SocketAction::Connect(handle, ConnectionState::Failed)).expect("working channel send");
+                tracing::error!("Failed to serialize SocketConnectOptions: {}", e);
+                return;
+            }
+        };
+
+        let promise = match self.socket_callback.call1(&JsValue::null(), &options) {
+            Ok(x) => x,
+            Err(e) => {
+                sender.send(SocketAction::Connect(handle, ConnectionState::Failed)).expect("working channel send");
+                tracing::warn!("Failed to call socket callback: {:?}", e);
+                return;
+            }
+        };
+        let promise = match promise.dyn_into::<Promise>() {
+            Ok(x) => x,
+            Err(_) => {
+                sender.send(SocketAction::Connect(handle, ConnectionState::Failed)).expect("working channel send");
+                tracing::warn!("Socket callback did not return a Promise");
+                return;
+            }
+        };
+
+        self.spawn_future(Box::pin(async move {
+            let res = wasm_bindgen_futures::JsFuture::from(promise).await;
+            let res = match res {
+                Ok(x) => x,
+                Err(e) => {
+                    tracing::warn!("Socket callback promise failed {:?}", e);
+                    sender.send(SocketAction::Connect(handle, ConnectionState::Failed)).expect("working channel send");
+                    return Ok(());
+                }
+            };
+
+            let success = res.as_bool().unwrap_or(false);
+            if success {
+                sender.send(SocketAction::Connect(handle, ConnectionState::Connected)).expect("working channel send");
+            } else {
+                sender.send(SocketAction::Connect(handle, ConnectionState::Failed)).expect("working channel send");
+            }
+
+            Ok(())
+        }));
+    }
+}
+
+#[derive(serde::Serialize)]
+struct SocketConnectOptions {
+    pub host: String,
+    pub port: u16,
+
+    #[serde(with = "serde_wasm_bindgen::preserve")]
+    pub readable: JsValue,
+    #[serde(with = "serde_wasm_bindgen::preserve")]
+    pub writable: JsValue,
+}
+
+#[wasm_bindgen]
+#[derive(Debug)]
+pub struct QueuingStrategy {
+    high_water_mark: f64,
+}
+
+#[wasm_bindgen]
+impl QueuingStrategy {
+    #[wasm_bindgen(getter, js_name = highWaterMark)]
+    pub fn high_water_mark(&self) -> f64 {
+        self.high_water_mark
+    }
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[derive(Clone, Debug)]
+    pub type ReadableStreamDefaultController;
+
+    #[wasm_bindgen(method, js_name = enqueue)]
+    pub fn enqueue(this: &ReadableStreamDefaultController, chunk: &JsValue);
+
+    #[wasm_bindgen(method, js_name = close)]
+    pub fn close(this: &ReadableStreamDefaultController);
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_name = ReadableStream, typescript_type = "ReadableStream")]
+    #[derive(Clone, Debug)]
+    pub type ReadableStream;
+
+    #[wasm_bindgen(constructor)]
+    pub fn new(receiver: WrappedReceiver, strategy: QueuingStrategy) -> ReadableStream;
+}
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_name = WritableStream, typescript_type = "WritableStream")]
+    #[derive(Clone, Debug)]
+    pub type WritableStream;
+
+    #[wasm_bindgen(constructor)]
+    pub fn new(sender: WrappedSender, strategy: QueuingStrategy) -> WritableStream;
+}
+
+#[wasm_bindgen]
+pub struct WrappedReceiver {
+    inner: Rc<Receiver<Vec<u8>>>,
+}
+
+#[wasm_bindgen]
+impl WrappedReceiver {
+    pub fn pull(&mut self, controller: ReadableStreamDefaultController) -> Promise {
+        let inner = self.inner.clone();
+
+        wasm_bindgen_futures::future_to_promise(async move {
+            match inner.recv().await {
+                Ok(v) => {
+                    let buffer = Uint8Array::new_with_length(v.len() as u32);
+                    buffer.copy_from(&v);
+                    controller.enqueue(&buffer.into());
+                }
+                Err(_) => { 
+                    controller.close();
+                },
+            };
+
+            Ok(JsValue::undefined())
+        })
+    }
+}
+
+#[wasm_bindgen]
+pub struct WrappedSender {
+    inner: Sender<SocketAction>,
+    handle: SocketHandle,
+}
+
+#[wasm_bindgen]
+impl WrappedSender {
+    pub fn write(&mut self, chunk: JsValue) {
+        if let Some(array) = chunk.dyn_ref::<Uint8Array>() {
+            tracing::error!("Received data");
+            self.inner.send(SocketAction::Data(self.handle, array.to_vec())).expect("working channel send");
+        } else {
+            tracing::warn!("Socket WritableStream was given a non-Uint8Array value: {:?}", chunk);
+        }
+    }
+
+    pub fn close(self) {
+        self.inner.send(SocketAction::Close(self.handle)).expect("working channel send");
+    }
+
+    pub fn abort(self, _reason: JsValue) {
+        self.inner.send(SocketAction::Close(self.handle)).expect("working channel send");
     }
 }

@@ -44,4 +44,7 @@ export const DEFAULT_CONFIG: Required<BaseLoadOptions> = {
     openUrlMode: OpenURLMode.Allow,
     allowNetworking: NetworkingAccessMode.All,
     openInNewTab: null,
+    socketCallback: async (_opt) => {
+        return false;
+    }
 };
