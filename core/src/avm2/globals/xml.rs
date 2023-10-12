@@ -292,6 +292,29 @@ pub fn children<'gc>(
     .into())
 }
 
+// ECMA-357 13.4.4.10 XML.prototype.contains ( value )
+pub fn contains<'gc>(
+    _activation: &mut Activation<'_, 'gc>,
+    this: Object<'gc>,
+    args: &[Value<'gc>],
+) -> Result<Value<'gc>, Error<'gc>> {
+    let xml = this.as_xml_object().unwrap();
+    let value = args.get_value(0);
+
+    if let Some(obj) = value.as_object() {
+        if Object::ptr_eq(this, obj) {
+            return Ok(true.into());
+        }
+
+        // NOTE: Spec only does pointer equality, but avmplus also checks node equality, so we do the same.
+        if let Some(other) = obj.as_xml_object() {
+            return Ok(xml.node().equals(&other.node()).into());
+        }
+    }
+
+    Ok(false.into())
+}
+
 pub fn copy<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Object<'gc>,
