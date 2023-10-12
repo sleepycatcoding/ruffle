@@ -36,6 +36,18 @@ package {
             return this;
         }
 
+        // ECMA-357 13.5.4.19 XMLList.prototype.propertyIsEnumerable ( P )
+        override AS3 function propertyIsEnumerable(propertyName:*):Boolean {
+            // 1. if ToNumber(P) is greater than or equal to 0 and ToNumber(P) is less than x.[[Length]], return true
+            var index:Number = Number(propertyName);
+            if (index >= 0.0 && index < this.length()) {
+                return true;
+            }
+
+            // 2. Return false
+            return false;
+        }
+
         prototype.hasComplexContent = function():Boolean {
             var self:XMLList = this;
             return self.AS3::hasComplexContent();
@@ -117,6 +129,11 @@ package {
         prototype.processingInstructions = function(name:String = "*"):XMLList {
             var self:XML = this;
             return self.AS3::processingInstructions(name);
+        }
+
+        prototype.propertyIsEnumerable = function(propertyName:*):Boolean {
+            var self:XMLList = this;
+            return self.AS3::propertyIsEnumerable(propertyName);
         }
 
         public static const length:int = 1;
