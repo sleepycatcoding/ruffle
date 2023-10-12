@@ -23,6 +23,7 @@ package {
         AS3 native function toXMLString():String;
         AS3 native function toString():String;
         AS3 native function comments():XMLList;
+        AS3 native function parent():Object;
         AS3 native function processingInstructions(name:String = "*"):XMLList;
 
         // The following native methods are not declared in the documentation,
