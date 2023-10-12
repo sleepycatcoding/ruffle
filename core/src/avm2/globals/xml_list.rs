@@ -206,6 +206,30 @@ pub fn children<'gc>(
     .into())
 }
 
+// ECMA-357 13.5.4.8 XMLList.prototype.contains ( value )
+pub fn contains<'gc>(
+    activation: &mut Activation<'_, 'gc>,
+    this: Object<'gc>,
+    args: &[Value<'gc>],
+) -> Result<Value<'gc>, Error<'gc>> {
+    let list = this.as_xml_list_object().unwrap();
+    let xml = args
+        .get_object(activation, 0, "value")?
+        .as_xml_object()
+        .unwrap();
+
+    // 1. For i = 0 to list.[[Length]]-1
+    for child in &*list.children() {
+        // 1.a. If the result of the comparison list[i] == value is true, return true
+        if child.node().equals(&xml.node()) {
+            return Ok(true.into());
+        }
+    }
+
+    // 2. Return false
+    Ok(false.into())
+}
+
 pub fn copy<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Object<'gc>,
