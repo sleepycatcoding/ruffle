@@ -388,6 +388,13 @@ impl RenderOptions {
         if self.exclude_warp && cfg!(windows) && info.vendor == 5140 && info.device == 140 {
             return false;
         }
+
+        if cfg!(macos) {
+            tracing::error!("Logging: vendor {}, device {}", info.vendor, info.device);
+        }
+
+        panic!("No problem, FIXME remove this later");
+
         true
     }
 }
