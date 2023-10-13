@@ -394,7 +394,5 @@ impl RenderOptions {
         }
 
         panic!("No problem, FIXME remove this later");
-
-        true
     }
 }
