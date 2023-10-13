@@ -389,10 +389,6 @@ impl RenderOptions {
             return false;
         }
 
-        if cfg!(macos) {
-            tracing::error!("Logging: vendor {}, device {}", info.vendor, info.device);
-        }
-
-        panic!("No problem, FIXME remove this later");
+        panic!("Logging: vendor {}, device {}", info.vendor, info.device);
     }
 }
