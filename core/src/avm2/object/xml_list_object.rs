@@ -744,11 +744,10 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
 
                             // 2.c.viii.2. If Type(V) is XML, let y.[[Name]] = V.[[Name]]
                             if let Some(xml) = value.as_object().and_then(|x| x.as_xml_object()) {
-                                // FIXME: What if XML value does not have a local name?
-                                y.set_local_name(
-                                    xml.node().local_name().expect("Not validated yet"),
-                                    activation.gc(),
-                                );
+                                if let Some(name) = xml.node().local_name() {
+                                    y.set_local_name(name, activation.gc());
+                                }
+
                                 // FIXME: Also set the namespace.
                             }
 
@@ -756,15 +755,13 @@ impl<'gc> TObject<'gc> for XmlListObject<'gc> {
                             if let Some(list) =
                                 value.as_object().and_then(|x| x.as_xml_list_object())
                             {
-                                // FIXME: What if XMLList does not have a target property.
-                                let target_property =
-                                    list.target_property().expect("Not validated yet");
-
-                                if let Some(name) = target_property.local_name() {
-                                    y.set_local_name(name, activation.gc());
-                                }
-                                if let Some(namespace) = target_property.explict_namespace() {
-                                    y.set_namespace(namespace, activation.gc());
+                                if let Some(target_property) = list.target_property() {
+                                    if let Some(name) = target_property.local_name() {
+                                        y.set_local_name(name, activation.gc());
+                                    }
+                                    if let Some(namespace) = target_property.explict_namespace() {
+                                        y.set_namespace(namespace, activation.gc());
+                                    }
                                 }
                             }
                         }
