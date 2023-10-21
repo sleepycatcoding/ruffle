@@ -161,6 +161,7 @@ pub fn length<'gc>(
     Ok(children.len().into())
 }
 
+// ECMA-357 13.5.4.4 XMLList.prototype.child ( propertyName )
 pub fn child<'gc>(
     activation: &mut Activation<'_, 'gc>,
     this: Object<'gc>,
@@ -168,19 +169,26 @@ pub fn child<'gc>(
 ) -> Result<Value<'gc>, Error<'gc>> {
     let list = this.as_xml_list_object().unwrap();
     let multiname = name_to_multiname(activation, &args[0], false)?;
-    let children = list.children();
-    let mut sub_children = Vec::new();
-    for child in &*children {
-        if let E4XNodeKind::Element { ref children, .. } = &*child.node().kind() {
-            sub_children.extend(
-                children
-                    .iter()
-                    .filter(|node| node.matches_name(&multiname))
-                    .map(|node| E4XOrXml::E4X(*node)),
-            );
+    let mut children = list.children_mut(activation.gc());
+
+    // 1. Let m be a new XMLList with m.[[TargetObject]] = list
+    let out = XmlListObject::new(activation, Vec::new(), Some(list.into()), None);
+
+    // 2. For i = 0 to list.[[Length]]-1
+    for child in &mut *children {
+        // 2.a. Let r = list[i].child(propertyName)
+        let r = child
+            .get_or_create_xml(activation)
+            .child(activation, &multiname);
+
+        // 2.b. If r.[[Length]] > 0, call the [[Append]] method of m with argument r
+        if r.length() > 0 {
+            out.append(r.into(), activation);
         }
     }
-    Ok(XmlListObject::new(activation, sub_children, Some(list.into()), None).into())
+
+    // 3. Return m
+    Ok(out.into())
 }
 
 pub fn children<'gc>(
