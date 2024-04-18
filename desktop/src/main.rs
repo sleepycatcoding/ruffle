@@ -146,8 +146,12 @@ fn shutdown() {
     }
 }
 
-#[tokio::main]
-async fn main() -> Result<(), Error> {
+fn main() -> Result<(), Error> {
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()?;
+    let _enter = runtime.enter();
+
     init();
 
     let opt = Opt::parse();
