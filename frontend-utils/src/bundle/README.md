@@ -14,6 +14,7 @@ A bundle can be a directory or a renamed zip file, and must contain at minimum a
       * [`url` - The url of the Flash content to open](#url---the-url-of-the-flash-content-to-open)
     * [`[player]`](#player)
       * [`[parameters]` - A list of parameters to pass to the starting movie](#parameters---a-list-of-parameters-to-pass-to-the-starting-movie)
+      * [`[headers]` - A table of HTTP headers to use while fetching files](#headers---a-table-of-http-headers-to-use-while-fetching-files)
       * [`script_timeout` - Script execution timeout](#script_timeout---script-execution-timeout)
       * [`base_url` - Base URL for relative file paths](#base_url---base-url-for-relative-file-paths)
       * [`quality` - Quality that the content starts with](#quality---quality-that-the-content-starts-with)
@@ -96,6 +97,13 @@ Example:
 key = "value"
 favourite_number = "5"
 ```
+
+#### `[headers]` - A table of HTTP headers to use while fetching files
+These headers are used when Ruffle fetches files from remote servers.
+
+##### Supported headers
+
+`referer` - HTTP referer header, this is expected to be a URL.
 
 #### `script_timeout` - Script execution timeout
 How long a single script execution (e.g. a frame of ActionScript 3) can take, before it's considered to be stuck or broken.

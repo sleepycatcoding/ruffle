@@ -22,6 +22,12 @@ pub fn read_player_options<'a>(
         }
     });
 
+    // Header table
+    table.get_table_like(cx, "headers", |cx, headers| {
+        // Referer header
+        result.referer = headers.parse_from_str(cx, "referer");
+    });
+
     // Script timeout in seconds (fractional-values are allowed)
     result.max_execution_duration = table
         .get_float_like(cx, "script_timeout")
