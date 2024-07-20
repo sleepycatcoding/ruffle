@@ -11,7 +11,7 @@ use crate::{
     context::UpdateContext,
     string::AvmString,
 };
-use async_channel::{unbounded, Receiver, Sender as AsyncSender, Sender};
+use async_channel::{unbounded, Receiver, Sender};
 use gc_arena::Collect;
 use slotmap::{new_key_type, SlotMap};
 use std::{
@@ -34,12 +34,12 @@ enum SocketKind<'gc> {
 #[collect(no_drop)]
 struct Socket<'gc> {
     target: SocketKind<'gc>,
-    sender: RefCell<AsyncSender<Vec<u8>>>,
+    sender: RefCell<Sender<Vec<u8>>>,
     connected: Cell<bool>,
 }
 
 impl<'gc> Socket<'gc> {
-    fn new(target: SocketKind<'gc>, sender: AsyncSender<Vec<u8>>) -> Self {
+    fn new(target: SocketKind<'gc>, sender: Sender<Vec<u8>>) -> Self {
         Self {
             target,
             sender: RefCell::new(sender),
@@ -226,15 +226,8 @@ impl<'gc> Sockets<'gc> {
 
                     match target {
                         SocketKind::Avm2(target) => {
-                            let mut activation = Avm2Activation::from_nothing(context.reborrow());
-
-                            let connect_evt =
-                                EventObject::bare_default_event(&mut activation.context, "connect");
-                            Avm2::dispatch_event(
-                                &mut activation.context,
-                                connect_evt,
-                                target.into(),
-                            );
+                            let connect_evt = EventObject::bare_default_event(context, "connect");
+                            Avm2::dispatch_event(context, connect_evt, target.into());
                         }
                         SocketKind::Avm1(target) => {
                             let mut activation = Avm1Activation::from_stub(
@@ -317,22 +310,14 @@ impl<'gc> Sockets<'gc> {
                             let bytes_loaded = data.len();
                             target.read_buffer().extend(data);
 
-                            let progress_evt = activation
-                                .avm2()
-                                .classes()
-                                .progressevent
-                                .construct(
-                                    &mut activation,
-                                    &[
-                                        "socketData".into(),
-                                        false.into(),
-                                        false.into(),
-                                        bytes_loaded.into(),
-                                        //NOTE: bytesTotal is not used by socketData event.
-                                        0.into(),
-                                    ],
-                                )
-                                .expect("ProgressEvent should be constructed");
+                            let progress_evt = EventObject::progress_event(
+                                &mut activation,
+                                "socketData",
+                                bytes_loaded as u64,
+                                0,
+                                false,
+                                false,
+                            );
 
                             Avm2::dispatch_event(
                                 &mut activation.context,
@@ -412,15 +397,12 @@ impl<'gc> Sockets<'gc> {
 
                     match target {
                         SocketKind::Avm2(target) => {
-                            let mut activation = Avm2Activation::from_nothing(context.reborrow());
-
                             // Clear the buffers if the connection was closed.
                             target.read_buffer().clear();
                             target.write_buffer().clear();
 
-                            let close_evt =
-                                EventObject::bare_default_event(&mut activation.context, "close");
-                            Avm2::dispatch_event(&mut activation.context, close_evt, target.into());
+                            let close_evt = EventObject::bare_default_event(context, "close");
+                            Avm2::dispatch_event(context, close_evt, target.into());
                         }
                         SocketKind::Avm1(target) => {
                             let mut activation = Avm1Activation::from_stub(
