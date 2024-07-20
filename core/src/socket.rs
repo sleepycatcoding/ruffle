@@ -32,7 +32,7 @@ enum SocketKind<'gc> {
 
 #[derive(Collect)]
 #[collect(no_drop)]
-struct Socket<'gc> {
+pub struct Socket<'gc> {
     target: SocketKind<'gc>,
     sender: RefCell<Sender<Vec<u8>>>,
     connected: Cell<bool>,
@@ -168,6 +168,10 @@ impl<'gc> Sockets<'gc> {
                 tracing::error!("Failed to send data to socket: {:?}", e);
             }
         }
+    }
+
+    pub fn open_sockets(&self) -> impl Iterator<Item = &Socket<'gc>> {
+        self.sockets.values()
     }
 
     pub fn close_all(&mut self) {
@@ -394,6 +398,8 @@ impl<'gc> Sockets<'gc> {
                         // Socket must have been closed before we could send event.
                         None => continue,
                     };
+
+                    // TODO: Write test to test check if connected is false if AS3 closes the connection vs remote closure
 
                     match target {
                         SocketKind::Avm2(target) => {

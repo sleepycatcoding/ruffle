@@ -4,6 +4,7 @@ mod display_object;
 mod domain;
 mod handle;
 mod movie;
+mod socket;
 
 use crate::context::{RenderContext, UpdateContext};
 use crate::debug_ui::avm1::Avm1ObjectWindow;
@@ -14,6 +15,7 @@ use crate::debug_ui::handle::{
     AVM1ObjectHandle, AVM2ObjectHandle, DisplayObjectHandle, DomainHandle,
 };
 use crate::debug_ui::movie::{MovieListWindow, MovieWindow};
+use crate::debug_ui::socket::SocketListWindow;
 use crate::display_object::TDisplayObject;
 use crate::tag_utils::SwfMovie;
 use gc_arena::DynamicRootSet;
@@ -34,6 +36,7 @@ pub struct DebugUi {
     items_to_save: Vec<ItemToSave>,
     movie_list: Option<MovieListWindow>,
     domain_list: Option<DomainListWindow>,
+    socket_list: Option<SocketListWindow>,
     display_object_search: Option<DisplayObjectSearchWindow>,
 }
 
@@ -48,6 +51,7 @@ pub enum Message {
     TrackTopLevelMovie,
     ShowKnownMovies,
     ShowDomains,
+    ShowSockets,
     SaveFile(ItemToSave),
     SearchForDisplayObject,
 }
@@ -91,6 +95,12 @@ impl DebugUi {
             }
         }
 
+        if let Some(mut socket_list) = self.socket_list.take() {
+            if socket_list.show(egui_ctx, context) {
+                self.socket_list = Some(socket_list);
+            }
+        }
+
         if let Some(mut search) = self.display_object_search.take() {
             if search.show(egui_ctx, context, &mut messages, movie_offset) {
                 self.display_object_search = Some(search);
@@ -128,6 +138,9 @@ impl DebugUi {
                 }
                 Message::ShowDomains => {
                     self.domain_list = Some(Default::default());
+                }
+                Message::ShowSockets => {
+                    self.socket_list = Some(Default::default());
                 }
                 Message::SearchForDisplayObject => {
                     self.display_object_search = Some(Default::default());

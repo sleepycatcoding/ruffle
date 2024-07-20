@@ -137,6 +137,12 @@ impl MenuBar {
                                 player.debug_ui().queue_message(DebugMessage::ShowDomains);
                             }
                         }
+                        if Button::new("Show Sockets").ui(ui).clicked() {
+                            ui.close_menu();
+                            if let Some(player) = &mut player {
+                                player.debug_ui().queue_message(DebugMessage::ShowSockets);
+                            }
+                        }
                         if Button::new(text(locale, "debug-menu-search-display-objects")).ui(ui).clicked() {
                             ui.close_menu();
                             if let Some(player) = &mut player {
